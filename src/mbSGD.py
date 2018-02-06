@@ -185,7 +185,8 @@ seed(1)
 # load and prepare data
 
 # dataset = get_csv_data()
-dataset = get_csv_haberman_data()
+# dataset = get_csv_haberman_data()
+dataset = get_csv_decision_data()
 dataset = normalize_data(dataset)
 print dataset[1]
 # evaluate algorithm
