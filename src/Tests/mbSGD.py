@@ -3,8 +3,7 @@ from random import seed
 from random import randrange
 from csv import reader
 from sklearn.datasets.samples_generator import make_blobs
-from math import exp
-from sklearn.preprocessing import StandardScaler
+import numpy as np
 
 
 # Load a CSV file
@@ -92,12 +91,45 @@ def predict(row, coefficients):
     yhat = coefficients[0]
     for i in range(len(row)-1):
         yhat += coefficients[i + 1] * row[i]
-    return 1.0 / (1.0 + exp(-yhat))
+    return 1.0 / (1.0 + np.exp(-yhat))
+
+
+# Make a prediction with coefficients
+def predict_batch_data(row, coefficients):
+    yhat = coefficients[0]
+    for i in range(len(row)-1):
+        yhat += coefficients[i + 1] * row[i]
+    return 1.0 / (1.0 + np.exp(-yhat))
+
+
+def next_batch(data, batchSize=32):
+    # loop over our dataset in mini-batches of size `batchSize`
+    for i in np.arange(0, len(data), batchSize):
+        yield data[i:i + batchSize]
 
 
 # Estimate logistic regression coefficients using stochastic gradient descent
 def coefficients_sgd(train, l_rate, n_epoch):
     coef = [0.0 for i in range(len(train[0]))]
+    np.random.shuffle(train)
+    train_data = np.array(train)
+
+    ddd = False
+
+    for epoch in range(n_epoch):
+        np.random.shuffle(train_data)
+        for batch_data in next_batch(train_data):
+            batch_x = batch_data[0:len(batch_data[0]) - 2]
+            batch_y = batch_data[:, -1]
+            yhat = predict_batch_data(batch_data, coef)
+
+            if not ddd:
+                print 'batch_x'
+                print batch_x[0]
+
+                print 'batch_y'
+                print batch_y[0]
+                ddd = True
 
     for epoch in range(n_epoch):
         for row in train:
@@ -171,10 +203,6 @@ def get_csv_haberman_data():
 
 
 def normalize_data(data):
-    # scaler = StandardScaler()
-    # scaler.fit(data)
-    # data_scaled = scaler.transform(data)
-    # return data_scaled.tolist()
     data_minmax = dataset_minmax(data)
     normalize_dataset(data, data_minmax)
     return data
@@ -188,7 +216,7 @@ seed(1)
 # dataset = get_csv_haberman_data()
 dataset = get_csv_decision_data()
 dataset = normalize_data(dataset)
-print dataset[1]
+
 # evaluate algorithm
 number_of_folds = 5
 learning_rate = 0.1
