@@ -1,6 +1,6 @@
 from csv import reader
 import numpy as np
-
+from sklearn.datasets.samples_generator import make_blobs
 
 # Load a CSV file
 def load_csv(filename):
@@ -54,10 +54,19 @@ def decision_data():
     data = normalize_data(data)
 
     data = np.array(data)
-    x = data[:, 1:(len(data[0]))]
-    y = data[:, 0]
+    return data
 
-    return x, y
+# merge features from labes
+def merge_labels_features(data_x, data_y):
+    data = np.c_[data_x, data_y]
+    return data
 
+# generate a 2-class classification problem with 400 data points,
+# where each data point is a 2D feature vector
+def random_data():
+    (X, y) = make_blobs(n_samples=400, n_features=2, centers=2, cluster_std=2.5, random_state=95)
+    data = merge_labels_features(X, y)
+    data = normalize_data(data)
+    return data
 
 # decision_data()
