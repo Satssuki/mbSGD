@@ -1,26 +1,27 @@
 import matplotlib.pyplot as plt
-from sklearn.datasets.samples_generator import make_blobs
 import dataloaders
+import numpy as np
+import sys
 from random import seed
 from random import randrange
 from csv import reader
+from sklearn.model_selection import KFold
 from sklearn.datasets.samples_generator import make_blobs
-import numpy as np
-import sys
 
 
 # Make a prediction with coefficients
 def predict(x, yhat, coefficients):
     # yhat = coefficients[0]
     for i in range(len(x)):
-        yhat += coefficients[i + 1] * x[i]
-    return 1.0 / (1.0 + np.exp(-yhat))
+        yhat += coefficients[i] * x[i]
+    return sigmoid_activation(yhat)
 
 
 # sigmoid function
 def sigmoid_activation(x):
     # compute and return the sigmoid activation value for a
     # given input value
+    return 1.0 / (1 + np.exp(-x))
     try:
         return 1.0 / (1 + np.exp(-x))
     except:
@@ -37,7 +38,7 @@ def next_batch(data_x, data_y, batch_size):
 
 # Stochastic Gradient Descent algorithm
 def mb_sgd(data_x, data_y, alpha, epochs, batch_size):
-    print (data_x.shape[1],)
+    #print (data_x.shape[1],)
     W = np.zeros(shape=data_x.shape[1])
 
     # initialize a list to store the loss value for each epoch
@@ -88,8 +89,7 @@ def mb_sgd(data_x, data_y, alpha, epochs, batch_size):
 
 
 # Split a dataset into k folds
-def cross_validation_split(data_x, data_y, n_folds):
-    data = merge_labels_features(data_x, data_y)
+def cross_validation_split(data, n_folds):
     dataset_split = list()
     dataset_copy = list(data)
     fold_size = int(len(data) / n_folds)
@@ -105,17 +105,11 @@ def cross_validation_split(data_x, data_y, n_folds):
 # Calculate accuracy percentage
 def accuracy_metric(actual, predicted):
     correct = 0
+
     for i in range(len(actual)):
         if actual[i] == predicted[i]:
             correct += 1
     return correct / float(len(actual)) * 100.0
-
-
-# seperate features from labes
-def seperate_labels_features(data):
-    data_x = data[:, 0:(len(data[0]) - 1)]
-    data_y = data[:, 1]
-    return data_x, data_y
 
 # merge features from labes
 def merge_labels_features(data_x, data_y):
@@ -127,36 +121,19 @@ def merge_labels_features(data_x, data_y):
 def shuffle_data(data_x, data_y):
     data = merge_labels_features(data_x, data_y)
     np.random.shuffle(data)
-    return seperate_labels_features(data)
-
-
-# Split a dataset into k folds
-def cross_validation_split_in_folds(data_x, data_y, n_folds):
-    data = np.c_[data_x, data_y]
-
-    dataset_split = list()
-    dataset_copy = list(data)
-    fold_size = int(len(data) / n_folds)
-    for i in range(n_folds):
-        fold = list()
-        while len(fold) < fold_size:
-            index = randrange(len(dataset_copy))
-            fold.append(dataset_copy.pop(index))
-        dataset_split.append(fold)
-    return dataset_split
+    return dataloaders.seperate_labels_features(data)
 
 
 # Linear Regression Algorithm With Stochastic Gradient Descent
 def train_and_test(train_set, test_set, number_of_epochs, alpha, batchSize, number_of_folds, add_additional_feature):
     predictions = list()
-    x, y = seperate_labels_features(np.array(train_set))
-    Y, coef, lossHistory = logistic_regression_mbSGD(x, y, number_of_epochs, alpha, batchSize, number_of_folds, add_additional_feature)
+    d_x, d_y = dataloaders.seperate_labels_features(train_set)
+    Y, coef, lossHistory = mb_sgd(d_x, d_y, alpha, number_of_epochs, batchSize)
 
-    # print 'train_set'
-    print train_set
-    # sys.exit(0)
-
-    for test_x, test_y in seperate_labels_features(np.array(train_set)):
+    test_set_x, test_set_y = dataloaders.seperate_labels_features(test_set)
+    print 'coef: ' + str(coef)
+    for i in range(len(test_set_x)):
+        test_x, test_y = test_set_x[i], test_set_y[i]
         yhat = predict(test_x, test_y, coef)
         yhat = round(yhat)
         predictions.append(yhat)
@@ -164,8 +141,45 @@ def train_and_test(train_set, test_set, number_of_epochs, alpha, batchSize, numb
     return predictions, coef, lossHistory, Y
 
 
-def evaluate_algorithm(data_x, data_y, number_of_epochs, alpha, batchSize, number_of_folds, add_additional_feature):
-    folds = cross_validation_split(data_x, data_y, number_of_folds)
+def evaluate_algorithm(data, number_of_epochs, alpha, batchSize, number_of_folds, add_additional_feature):
+
+    kf = KFold(n_splits=number_of_folds)
+    sum = 0
+
+    scores = list()
+    coef = list()
+    
+    for train, test in kf.split(data):
+
+        train_data = np.array(data)[train]
+        test_data = np.array(data)[test]
+
+        # print 'train_data'
+        # for i in range(50):
+        #     print train_data[i]
+
+        # print '--------------------------------------'
+
+        # print 'test_data'
+        # for i in range(50):
+        #     print test_data[i]
+
+        predicted, coef, lossHistory, Y = train_and_test(train_data, test_data, number_of_epochs, alpha, batchSize, number_of_folds, add_additional_feature)
+        
+        actual_x, actual_y = dataloaders.seperate_labels_features(test_data)
+        accuracy = accuracy_metric(actual_y, predicted)
+
+        for i in range(len(actual_y)):
+            print str(actual_y[i]) + '/' + str(predicted[i])
+
+        print 'fold score, expected: ' + str(accuracy)
+        scores.append(accuracy)
+
+    return scores, coef, lossHistory, Y
+
+
+def evaluate_algorithm_old(data, number_of_epochs, alpha, batchSize, number_of_folds, add_additional_feature):
+    folds = cross_validation_split(data, number_of_folds)
     scores = list()
     coef = list()
     for fold in folds:
@@ -177,9 +191,9 @@ def evaluate_algorithm(data_x, data_y, number_of_epochs, alpha, batchSize, numbe
         for row in fold:
             row_copy = list(row)
             test_set.append(row_copy)
-            row_copy[-1] = None
+            #row_copy[-1] = None
 
-        predicted, coef, lossHistory, Y = train_and_test(train_set, test_set, number_of_epochs, alpha, batchSize, number_of_folds, add_additional_feature)
+        predicted, coef, lossHistory, Y = train_and_test(np.array(train_set), np.array(test_set), number_of_epochs, alpha, batchSize, number_of_folds, add_additional_feature)
         actual = [row[-1] for row in fold]
         accuracy = accuracy_metric(actual, predicted)
         scores.append(accuracy)
@@ -187,9 +201,9 @@ def evaluate_algorithm(data_x, data_y, number_of_epochs, alpha, batchSize, numbe
 
 
 # actually the Logistic Regression implementation
-def logistic_regression_mbSGD(X, y, number_of_epochs, alpha, batchSize, number_of_folds, add_additional_feature=False):
+def logistic_regression_mbSGD(data, number_of_epochs, alpha, batchSize, number_of_folds, add_additional_feature=False):
 
-    # X, y = seperate_labels_features(np.array(data)) 
+    X, y = dataloaders.seperate_labels_features(np.array(data)) 
     if(add_additional_feature):
         # insert a column of 1's as the first entry in the feature
         # vector -- this is a little trick that allows us to treat
@@ -200,15 +214,23 @@ def logistic_regression_mbSGD(X, y, number_of_epochs, alpha, batchSize, number_o
     # initialize our weight matrix such it has the same number of
     # columns as our input features
     print("[INFO] starting training...")
+    
+    scores, W, lossHistory, Y = evaluate_algorithm(dataloaders.merge_labels_features(X, y), number_of_epochs, alpha, batchSize, number_of_folds, add_additional_feature)
+    print 'scores'
+    print scores
+    print 'W'
+    print W
+    print 'Y'
+    print Y
+    #exit(0)
 
-    # Y, W, lossHistory = evaluate_algorithm(X, y, mb_sgd, number_of_folds, number_of_epochs, batchSize)
-    Y, W, lossHistory = mb_sgd(X, y, alpha, number_of_epochs, batchSize)
+    # Y, W, lossHistory = mb_sgd(X, y, alpha, number_of_epochs, batchSize)
 
     # print W, lossHistory
     # plot the original data along with our line of best fit
     plt.figure()
     plt.scatter(X[:, 1], X[:, 2], marker="o", c=y)
-    plt.plot(X, Y, "r-")
+    # plt.plot(X, Y, "r-")
 
     # construct a figure that plots the loss over time
     fig = plt.figure()
@@ -218,15 +240,15 @@ def logistic_regression_mbSGD(X, y, number_of_epochs, alpha, batchSize, number_o
     plt.ylabel("Loss")
     plt.show()
 
-    return Y, W, lossHistory
+    return scores, W, lossHistory, Y
 
+# data structure |feature1,feature2,..,featuren,  label|
+# data = dataloaders.diabetes_data()
+#data = dataloaders.wine_data()
+data = dataloaders.random_data()
 
-# generate a 2-class classification problem with 400 data points,
-# where each data point is a 2D feature vector
-(X, y) = make_blobs(n_samples=400, n_features=2, centers=2, cluster_std=2.5, random_state=95)
-#(X, y) = dataloaders.decision_data()
-data = merge_labels_features(X, y)
-
-#scores, coef, lossHistory, Y = evaluate_algorithm(X, y, number_of_epochs=100, alpha=0.01,batchSize=32, number_of_folds=5,add_additional_feature=True)
-Y, W, lossHistory = logistic_regression_mbSGD(X, y, number_of_epochs=100, alpha=0.01,batchSize=32, number_of_folds=5,add_additional_feature=True)
-# print W
+# print 'data' + str(data[0])
+scores, coef, lossHistory, Y = logistic_regression_mbSGD(data, number_of_epochs=50, alpha=0.01,batchSize=32, number_of_folds=5,add_additional_feature=True)
+print('Scores: %s' % scores)
+print('Mean Accuracy: %.3f%%' % (sum(scores)/float(len(scores))))
+print coef
