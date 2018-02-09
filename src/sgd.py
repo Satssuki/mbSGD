@@ -39,7 +39,8 @@ def next_batch(data_x, data_y, batch_size):
 # Stochastic Gradient Descent algorithm
 def mb_sgd(data_x, data_y, alpha, epochs, batch_size):
     #print (data_x.shape[1],)
-    W = np.zeros(shape=data_x.shape[1])
+    W = np.random.uniform(size=(data_x.shape[1],))
+    
 
     # initialize a list to store the loss value for each epoch
     lossHistory = []
@@ -230,7 +231,7 @@ def logistic_regression_mbSGD(data, number_of_epochs, alpha, batchSize, number_o
     # plot the original data along with our line of best fit
     plt.figure()
     plt.scatter(X[:, 1], X[:, 2], marker="o", c=y)
-    # plt.plot(X, Y, "r-")
+    plt.plot(X, Y, "r-")
 
     # construct a figure that plots the loss over time
     fig = plt.figure()
