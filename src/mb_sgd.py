@@ -208,6 +208,9 @@ y_in = y[:-index_to_leave_out]
 classes = np.array(get_classes(y_in))
 models = list()
 
+# rbf_feature = RBFSampler(gamma=1, random_state=1)
+# X_features = rbf_feature.fit_transform(X)
+
 for class_y_in in classes:
 
     X_train, X_test, y_train, y_test = [], [], [], []
