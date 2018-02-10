@@ -42,6 +42,10 @@ def wine_data():
     return download_data('https://archive.ics.uci.edu/ml/machine-learning-databases/wine/wine.data', True)
 
 
+def local_data(file='dataset42.csv'):
+    return download_data('C:\Projects\mbSGD\data\\' + file, True)
+
+
 def diabetes_data():
     return download_data('https://archive.ics.uci.edu/ml/machine-learning-databases/pima-indians-diabetes/pima-indians-diabetes.data', False)
 
@@ -54,14 +58,13 @@ def decision_data():
         str_column_to_float(data, ii)
 
     x, y = seperate_labels_features(np.array(data), label_index_is_last=False)
-    x = normalize_data(x)
     data = merge_labels_features(x, y)
     return np.array(data)
 
 # generate a 2-class classification problem with 400 data points,
 # where each data point is a 2D feature vector
-def random_data():
-    (X, y) = make_blobs(n_samples=400, n_features=2, centers=2, cluster_std=2.5, random_state=95)
+def random_data(n_features=4, centers=2):
+    (X, y) = make_blobs(n_samples=400, n_features=n_features, centers=centers, cluster_std=2.5, random_state=95)
     return merge_labels_features(X, y)
 
 # merge features from labes

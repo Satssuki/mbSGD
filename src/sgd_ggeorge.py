@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import dataloader
 import numpy as np
 
-(X, y) = dataloader.seperate_labels_features(dataloader.wine_data())
+(X, y) = make_blobs(n_samples=400, n_features=2, centers=2, cluster_std=2.5, random_state=95)
 X_out = X[-40:]
 y_out = y[-40:]
 
