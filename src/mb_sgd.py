@@ -33,10 +33,10 @@ def minmax_fit_tranform(data):
 
 # calculcate new features using polynomial transformation
 def polynomial_transformation(X):
-    
+
     poly = PolynomialFeatures(2)
     return poly.fit_transform(X)
-    
+
     result = list()
 
     for record in X:
@@ -53,7 +53,7 @@ def polynomial_transformation(X):
             for j in range(len(X[0])):
                 if [record[i], record[j]] not in index_feat and [record[j], record[i]] not in index_feat:
                     index_feat.append([record[i], record[j]])
-        
+
         for w in index_feat:
             record_result.append(w[0] * w[1])
 
@@ -102,7 +102,15 @@ def diabetes_data():
 def wine_data():
     return download_data('https://archive.ics.uci.edu/ml/machine-learning-databases/wine/wine.data', False)
 
-#fetch a new batch for features and labels using a specific batch size
+# https://archive.ics.uci.edu/ml/machine-learning-databases/balance-scale/balance-scale.data
+def balance_scale_data():
+    return 0
+
+# https://archive.ics.uci.edu/ml/datasets/Wholesale+customers
+def wholesales_customers_data():
+    return download_data('https://archive.ics.uci.edu/ml/machine-learning-databases/00292/Wholesale%20customers%20data.csv', label_index_is_last=False)
+
+# fetch a new batch for features and labels using a specific batch size
 def next_batch(data_x, data_y, batch_size):
     for i in np.arange(0, data_x.shape[0], batch_size):
         yield (data_x[i:i + batch_size], data_y[i:i + batch_size])
@@ -111,7 +119,7 @@ def next_batch(data_x, data_y, batch_size):
 def sigmoid_activation(x):
     return 1.0 / (1 + np.exp(-x))
 
-# this function uses a set of features and predict a label using coefficients 
+# this function uses a set of features and predict a label using coefficients
 def predict(row, coefficients, tranformation_type='pol'):
 
     yhat = coefficients[0]
@@ -135,7 +143,7 @@ def accuracy_metric(actual, predicted):
 
     return correct / float(len(actual)) * 100.0
 
-# shuffling the features and labels 
+# shuffling the features and labels
 def shuffle_data(data_x, data_y):
     data = merge_labels_features(data_x, data_y)
     np.random.shuffle(data)
@@ -144,20 +152,24 @@ def shuffle_data(data_x, data_y):
 # actual the core algorthm to train our data
 def train(X_train, X_test, y_train, y_test, number_of_epochs, alpha, batchSize, tranformation_type, gamma=1):
     # scaler = MinMaxScaler()
+
     trainX, minmax = minmax_fit_tranform(X_train)
     testX = minmax_tranform(X_test, minmax)
 
-    print 'Tranforming data using ' + tranformation_type + '...' 
+    print 'Tranforming data using ' + tranformation_type + '...'
 
     if(tranformation_type == 'rdf'):
         trainX = rbf_transformation(trainX, gamma)
+        testX = rbf_transformation(testX, gamma)
     else:
-        trainX = polynomial_transformation(trainX) #np.c_[np.ones((trainX.shape[0])), trainX]
+        trainX = polynomial_transformation(trainX)
+        testX = polynomial_transformation(testX)
 
-    print 'Tranformation done' 
+    print 'Tranformation done'
 
     # set a "random value" to init coefficients
     W = np.random.uniform(size=(trainX.shape[1],))
+
     lossHistory = []
     # loop through epochs
     for epoch in np.arange(0, number_of_epochs):
@@ -169,25 +181,27 @@ def train(X_train, X_test, y_train, y_test, number_of_epochs, alpha, batchSize, 
             preds = sigmoid_activation(batchX.dot(W))
             # calculate error
             error = preds - batchY
-            # batch loass is the square value of error 
+            # batch loass is the square value of error
             loss = np.sum(error ** 2)
             epochLoss.append(loss)
             gradient = batchX.T.dot(error) / batchX.shape[0]
-            
+            # print 'trace'
+            # print len(trainX.shape)
+            # print 'trace1'
+            # print len(gradient)
             # update coefficients
             W += -alpha * gradient
-        
+
         # calculate average epoch loss and append it into an array
         lossHistory.append(np.average(epochLoss))
 
-        Y = list()
+        # Y = list()
 
-        if(tranformation_type == 'pol'):
-            Y = (-W[0] - (W[1] * trainX)) / W[2]
-        else:
-            # Y = ((W[0] * trainX)) / W[1]
-            Y = (- (W[0] * trainX)) / W[1]
-            # Y = np.dot(trainX, W)
+        # if(tranformation_type == 'pol'):
+        #     Y = (-W[0] - (W[1] * trainX)) / W[2]
+        # else:
+        #     Y = (- (W[0] * trainX)) / W[1]
+        #     # Y = np.dot(trainX, W)
 
     predictions = list()
 
@@ -198,20 +212,20 @@ def train(X_train, X_test, y_train, y_test, number_of_epochs, alpha, batchSize, 
 
     accuracy = accuracy_metric(y_test, predictions)
 
-    #return W, lossHistory, accuracy
-
-    plt.figure()
-    plt.scatter(trainX[:, 1], trainX[:, 2], marker="o", c=y_train)
-    plt.plot(trainX, Y, "r-")
-    fig = plt.figure()
-    plt.plot(np.arange(0, number_of_epochs), lossHistory)
-    fig.suptitle("Training Loss")
-    plt.xlabel("Epoch #")
-    plt.ylabel("Loss")
-    plt.show()
     return W, lossHistory, accuracy
 
-# get the number of labels our dataset has 
+    # plt.figure()
+    # plt.scatter(trainX[:, 1], trainX[:, 2], marker="o", c=y_train)
+    # plt.plot(trainX, Y, "r-")
+    # fig = plt.figure()
+    # plt.plot(np.arange(0, number_of_epochs), lossHistory)
+    # fig.suptitle("Training Loss")
+    # plt.xlabel("Epoch #")
+    # plt.ylabel("Loss")
+    # plt.show()
+    # return W, lossHistory, accuracy
+
+# get the number of labels our dataset has
 def get_classes(labels):
     classes = list(labels)
     unique_classes = np.unique(classes)
@@ -234,7 +248,7 @@ def get_classes(labels):
 
     return new_labels
 
-# this funcation gets an array of coefficient sets and chooses the best using data which is uknown from our model 
+# this funcation gets an array of coefficient sets and chooses the best using data which is uknown from our model
 def choose_the_best_model(unknown_data_X, unknown_data_y, coeffecients):
     model_accuracies = list()
 
@@ -252,15 +266,14 @@ def choose_the_best_model(unknown_data_X, unknown_data_y, coeffecients):
 
     return coeffecients[np.argmax(model_accuracies)]
 
-
 n_epochs = 200
 l_rate = 0.01
 batch_size = 50
-tranformation_type = 'pol' # 'pol' for polynomial or 'rbf' for RBF
+tranformation_type = 'pol'  # 'pol' for polynomial or 'rbf' for RBF
 number_of_folds = 5
 leave_out = 0.2
 
-dataset = diabetes_data()
+dataset = wholesales_customers_data()
 X, y = seperate_labels_features(dataset)
 index_to_leave_out = int(round(len(X) * leave_out))
 print 'data length: ' + str(len(X))
@@ -276,9 +289,6 @@ y_in = y[:-index_to_leave_out]
 classes = np.array(get_classes(y_in))
 models = list()
 
-# rbf_feature = RBFSampler(gamma=1, random_state=1)
-# X_features = rbf_feature.fit_transform(X)
-
 for class_y_in in classes:
 
     X_train, X_test, y_train, y_test = [], [], [], []
@@ -291,13 +301,11 @@ for class_y_in in classes:
     for train_index, test_index in kf.split(X_in):
         X_train, X_test = X_in[train_index], X_in[test_index]
         y_train, y_test = class_y_in[train_index], class_y_in[test_index]
+
         W, lossHistory, accuracy = train(
             X_train, X_test, y_train, y_test, n_epochs, l_rate, batch_size, tranformation_type)
         accuracies.append(accuracy)
         coeffecients.append(W)
-
-    for coef in coeffecients:
-        print 'coeffecients: ' + str(coef)
 
     print 'accuracies: ' + str(accuracies)
     best_model = choose_the_best_model(X_out, y_out, coeffecients)
@@ -305,5 +313,5 @@ for class_y_in in classes:
     print 'best_model: ' + str(best_model)
     print 'avg accuracy: ' + str(np.mean(accuracies))
 
-print 'final models'
-print models
+# print 'final models'
+# print models
