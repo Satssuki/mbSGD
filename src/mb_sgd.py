@@ -1,13 +1,51 @@
 from sklearn.model_selection import train_test_split
-from sklearn.datasets.samples_generator import make_blobs
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import KFold
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from numpy.linalg import norm
-import pandas
 from csv import reader
-from sklearn.model_selection import KFold
+import itertools
+
+
+# get all possible combinations among feature
+def get_polynomial_fetures(X):
+    final_f = list()
+    X1_features = itertools.combinations_with_replacement(np.arange(X), X) 
+
+    for i in X1_features:
+        final_f.append(np.array(i[0: (X)]))
+
+    return final_f
+
+
+# calculcate new features using polynomial transformation
+def polynomial_all_fetures(X):
+    number_of_features = len(X[0])
+    final_f = get_polynomial_fetures(number_of_features)
+    result = list()
+
+    for record in X:
+        record = X[0]
+        record_result = list()
+        record_result.append(1)
+
+        for f in range(number_of_features):
+            record_result.append(record[f])
+
+        for expression in final_f:
+            r_value = 1
+            for i in range(number_of_features):
+                r_value = r_value * record[expression[i]]
+            
+            print 'final_f'
+            print expression
+            print record
+            print r_value
+            record_result.append(r_value)
+
+    result.append(record_result)
+    return result
 
 
 # merge features from labes
@@ -15,7 +53,7 @@ def merge_labels_features(data_x, data_y):
     data = np.c_[data_x, data_y]
     return data
 
-
+# downloading data from a specific url and check if label column is the last one
 def download_data(url, label_index_is_last=True):
     pandas_data = pd.read_csv(url)
     x, y = seperate_labels_features(
@@ -48,29 +86,33 @@ def wine_data():
     return download_data('https://archive.ics.uci.edu/ml/machine-learning-databases/wine/wine.data', False)
 
 
+#fetch a new batch for features and labels using a specific batch size
 def next_batch(data_x, data_y, batch_size):
     for i in np.arange(0, data_x.shape[0], batch_size):
         yield (data_x[i:i + batch_size], data_y[i:i + batch_size])
 
 
+# sigmoid function
 def sigmoid_activation(x):
     return 1.0 / (1 + np.exp(-x))
 
 
-def predict(row, coefficients, add_additional_feature = True):
-    
-	yhat = coefficients[0]
-	
-	if (add_additional_feature == True):
-		for i in range(len(row)-1):
-			yhat += coefficients[i + 1] * row[i]
-	else:
-		for i in range(len(row)):
-			yhat += coefficients[i] * row[i]
+# this function uses a set of features and predict a label using coefficients 
+def predict(row, coefficients, add_additional_feature=True):
 
-	return sigmoid_activation(yhat)
+    yhat = coefficients[0]
+
+    if (add_additional_feature == True):
+        for i in range(len(row)-1):
+            yhat += coefficients[i + 1] * row[i]
+    else:
+        for i in range(len(row)):
+            yhat += coefficients[i] * row[i]
+
+    return sigmoid_activation(yhat)
 
 
+# just a calculation get accuracy percentage
 def accuracy_metric(actual, predicted):
     correct = 0
 
@@ -81,12 +123,13 @@ def accuracy_metric(actual, predicted):
     return correct / float(len(actual)) * 100.0
 
 
+# shuffling the features and labels 
 def shuffle_data(data_x, data_y):
     data = merge_labels_features(data_x, data_y)
     np.random.shuffle(data)
     return seperate_labels_features(data)
 
-
+# actual the core algorthm to train our data
 def train(X_train, X_test, y_train, y_test, number_of_epochs, alpha, batchSize, add_additional_feature):
     scaler = MinMaxScaler()
     trainX = scaler.fit_transform(X_train)
@@ -94,9 +137,6 @@ def train(X_train, X_test, y_train, y_test, number_of_epochs, alpha, batchSize, 
 
     if(add_additional_feature):
         trainX = np.c_[np.ones((trainX.shape[0])), trainX]
-
-    # print 'after'
-    # print trainX[0]
 
     W = np.random.uniform(size=(trainX.shape[1],))
     lossHistory = []
@@ -112,14 +152,14 @@ def train(X_train, X_test, y_train, y_test, number_of_epochs, alpha, batchSize, 
             W += -alpha * gradient
         lossHistory.append(np.average(epochLoss))
 
-	Y = list()
+        Y = list()
 
-	if(add_additional_feature == True):
-		Y = (- (W[0] * trainX)) / W[1]
-	else:
-		# Y = ((W[0] * trainX)) / W[1]
-		Y = (-W[0] - (W[1] * trainX)) / W[2]
-		# Y = np.dot(trainX, W)
+        if(add_additional_feature == True):
+            Y = (- (W[0] * trainX)) / W[1]
+        else:
+            # Y = ((W[0] * trainX)) / W[1]
+            Y = (-W[0] - (W[1] * trainX)) / W[2]
+            # Y = np.dot(trainX, W)
 
     predictions = list()
 
@@ -144,29 +184,31 @@ def train(X_train, X_test, y_train, y_test, number_of_epochs, alpha, batchSize, 
     return W, lossHistory, accuracy
 
 
+# get the number of labels our dataset has 
 def get_classes(labels):
-	classes = list(labels)
-	unique_classes = np.unique(classes)
-	print 'unique_classes: ' + str(unique_classes)
+    classes = list(labels)
+    unique_classes = np.unique(classes)
+    print 'unique_classes: ' + str(unique_classes)
 
-	if len(unique_classes) == 2:
-		return [classes]
+    if len(unique_classes) == 2:
+        return [classes]
 
-	new_labels = list()
-	for i in range(len(unique_classes) - 1):
-		class_tranformation = list()
-		for j in range(len(classes)):
-			
-			if(classes[j] == unique_classes[i]):
-				class_tranformation.append(1)
-			else:
-				class_tranformation.append(0)
+    new_labels = list()
+    for i in range(len(unique_classes) - 1):
+        class_tranformation = list()
+        for j in range(len(classes)):
 
-        new_labels.append(class_tranformation)
+            if(classes[j] == unique_classes[i]):
+                class_tranformation.append(1)
+            else:
+                class_tranformation.append(0)
 
-	return new_labels
+    new_labels.append(class_tranformation)
+
+    return new_labels
 
 
+# this funcation gets an array of coefficient sets and chooses the best using data which is uknown from our model 
 def choose_the_best_model(unknown_data_X, unknown_data_y, coeffecients):
     model_accuracies = list()
 
@@ -188,6 +230,7 @@ def choose_the_best_model(unknown_data_X, unknown_data_y, coeffecients):
 n_epochs = 2000
 l_rate = 0.01
 batch_size = 50
+tranformation_type = 'pol' # 'pol' for polynomial or 'rbf' for RBF
 add_feature = True
 number_of_folds = 5
 leave_out = 0.2
