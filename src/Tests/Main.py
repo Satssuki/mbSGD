@@ -4,20 +4,20 @@ import numpy as np
 from sklearn import linear_model
 from sklearn.kernel_approximation import RBFSampler
 import itertools
+from sklearn.preprocessing import PolynomialFeatures
 
 
 def get_polynomial_fetures(X):
     final_f = list()
-    X1_features = itertools.combinations_with_replacement(np.arange(X), X) 
+    X1_features = itertools.combinations_with_replacement(np.arange(X), X)
 
     for i in X1_features:
         final_f.append(np.array(i[0: (X)]))
 
     return final_f
 
-def polynomial_all_fetures(X):
-    number_of_features = len(X[0])
-    final_f = get_polynomial_fetures(number_of_features)
+
+def polynomial_fetures(X):
     result = list()
 
     for record in X:
@@ -25,25 +25,21 @@ def polynomial_all_fetures(X):
         record_result = list()
         record_result.append(1)
 
-        for f in range(number_of_features):
-            record_result.append(record[f])
+        for i in range(len(X[0])):
+            record_result.append(record[i])
 
-        for expression in final_f:
-            r_value = 1
-            for i in range(number_of_features):
-                r_value = r_value * record[expression[i]]
-            
-            print 'final_f'
-            print expression
-            print record
-            print r_value
-            record_result.append(r_value)
+        index_feat = list()
+
+        for i in range(len(X[0])):
+            for j in range(len(X[0])):
+                if [record[i], record[j]] not in index_feat and [record[j], record[i]] not in index_feat:
+                    index_feat.append([record[i], record[j]])
+        
+        for w in index_feat:
+            record_result.append(w[0] * w[1])
 
     result.append(record_result)
     return result
-        
-    
-
 
 
 epochs = 100
@@ -52,7 +48,8 @@ batch_size = 32
 
 # generate a 2-class classification problem with 400 data points,
 # where each data point is a 2D feature vector
-(X, y) = make_blobs(n_samples=400, n_features=2, centers=2, cluster_std=2.5, random_state=95)
+(X, y) = make_blobs(n_samples=400, n_features=2,
+                    centers=2, cluster_std=2.5, random_state=95)
 
 # insert a column of 1's as the first entry in the feature
 # vector -- this is a little trick that allows us to treat
@@ -61,17 +58,16 @@ batch_size = 32
 X = np.c_[np.ones((X.shape[0])), X]
 
 
-
 rbf_feature = RBFSampler(gamma=1, random_state=1)
 X_features = rbf_feature.fit_transform(X)
 
+dd = [[10, 2, 3]]
 
-final_f = list()
-X1_features = itertools.combinations_with_replacement([1, 2], 2) 
+test = polynomial_all_fetures(dd)
+print np.array(test)
 
-test = polynomial_all_fetures([[1, 2, 3]])
-
-print test
+poly = PolynomialFeatures(2)
+print poly.fit_transform(dd)
 
 # print X[0]
 # print X_features[0]
