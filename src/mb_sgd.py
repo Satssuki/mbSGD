@@ -269,17 +269,21 @@ def choose_the_best_model(unknown_data_X, unknown_data_y, coeffecients):
 n_epochs = 200
 l_rate = 0.01
 batch_size = 50
-tranformation_type = 'pol'  # 'pol' for polynomial or 'rbf' for RBF
+tranformation_type = 'pol' # 'pol' for polynomial or 'rbf' for RBF
 number_of_folds = 5
 leave_out = 0.2
 
+# load data
 dataset = wholesales_customers_data()
 X, y = seperate_labels_features(dataset)
 index_to_leave_out = int(round(len(X) * leave_out))
+
+
 print 'data length: ' + str(len(X))
 print 'leaving out : ' + str(index_to_leave_out) + \
     ' records (' + str(leave_out * 100) + '%)'
 
+# leaving some data out of model
 X_out = X[-index_to_leave_out:]
 y_out = y[-index_to_leave_out:]
 
