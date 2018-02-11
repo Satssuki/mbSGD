@@ -104,7 +104,7 @@ def wine_data():
 
 # https://archive.ics.uci.edu/ml/machine-learning-databases/balance-scale/balance-scale.data
 def balance_scale_data():
-    return 0
+    return download_data('https://archive.ics.uci.edu/ml/machine-learning-databases/balance-scale/balance-scale.data', label_index_is_last=False)
 
 # https://archive.ics.uci.edu/ml/datasets/Wholesale+customers
 def wholesales_customers_data():
