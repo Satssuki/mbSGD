@@ -280,7 +280,7 @@ def load_data(input):
         dataset = balance_scale_data()
     return dataset
 
-
+# read user arguments
 def get_parameters():
 
     ap = argparse.ArgumentParser()
@@ -297,11 +297,10 @@ def get_parameters():
 
     return args["epochs"], args["alpha"], args["batch_size"], args["tranformation_type"], args["folds"], args["l2"], args["gamma"], args["dataset"]
 
-
+# use agnostic data to get the model with the best accuracy 
 def test_coefficients(X, y, coeffecients):
     trainX, minmax = minmax_fit_tranform(X)
     return choose_the_best_model(trainX, y, coeffecients)
-
 
 n_epochs, l_rate, batch_size, tranformation_type, number_of_folds, l_2, gamma, data = get_parameters()
 
