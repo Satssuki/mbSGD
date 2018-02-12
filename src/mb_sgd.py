@@ -157,9 +157,8 @@ def shuffle_data(data_x, data_y):
     return seperate_labels_features(data)
 
 # actual the core algorthm to train our data
-def train(X_train, X_test, y_train, y_test, number_of_epochs, alpha, batchSize, tranformation_type, l2=1.0, gamma=1):
-    # scaler = MinMaxScaler()
-
+def train(X_train, X_test, y_train, y_test, number_of_epochs, alpha, batchSize, tranformation_type, l2=1.0, gamma=1.0):
+ 
     trainX, minmax = minmax_fit_tranform(X_train)
     testX = minmax_tranform(X_test, minmax)
 
@@ -200,14 +199,6 @@ def train(X_train, X_test, y_train, y_test, number_of_epochs, alpha, batchSize, 
 
         # calculate average epoch loss and append it into an array
         lossHistory.append(np.average(epochLoss))
-
-        # Y = list()
-
-        # if(tranformation_type == 'pol'):
-        #     Y = (-W[0] - (W[1] * trainX)) / W[2]
-        # else:
-        #     Y = (- (W[0] * trainX)) / W[1]
-        #     # Y = np.dot(trainX, W)
 
     predictions = list()
 
@@ -272,31 +263,53 @@ def choose_the_best_model(unknown_data_X, unknown_data_y, coeffecients):
 
     return coeffecients[np.argmax(model_accuracies)]
 
+# choosing dataset from user input
+def load_data(input):
+    dataset = list()
+    if data.lower() == 'wine':
+        print 'loading wine data...'
+        dataset = wine_data()
+    elif data.lower() == 'wholesales':
+        print 'loading wholesales customers data...'
+        dataset = wholesales_customers_data()
+    elif data.lower() == 'diabetes':
+        print 'loading diabetes data...'
+        dataset = diabetes_data()
+    elif data.lower() == 'balance':
+        print 'loading balance scale data...'
+        dataset = balance_scale_data()
+    return dataset
+
 
 def get_parameters():
+
     ap = argparse.ArgumentParser()
     
-    ap.add_argument("-e", "--epochs", type=int, default=100, help="# of epochs")
-    ap.add_argument("-a", "--alpha", type=float, default=0.01, help="learning rate")
-    ap.add_argument("-b", "--batch-size", type=int, default=32, help="size of SGD mini-batches")
-    ap.add_argument("-b", "--tranformation-type", type=str, default="pol", help="tranformation type 'pol' or 'rbf'")
-    ap.add_argument("-b", "--folds", type=int, default=5, help="# of folds")
-    ap.add_argument("-b", "--l2", type=float, default=1.0, help="l2")
-    ap.add_argument("-b", "--gamma", type=float, default=1.0, help="gamma parameter for RBF tranformation")
+    ap.add_argument("-e", "--epochs", type=int, default=200, help="# of epochs")
+    ap.add_argument("-a", "--alpha", type=float, default=0.001, help="learning rate")
+    ap.add_argument("-b", "--batch_size", type=int, default=50, help="size of SGD mini-batches")
+    ap.add_argument("-t", "--tranformation_type", type=str, default="pol", help="tranformation type 'pol' or 'rbf'")
+    ap.add_argument("-f", "--folds", type=int, default=5, help="# of folds")
+    ap.add_argument("-l", "--l2", type=float, default=1.0, help="l2")
+    ap.add_argument("-g", "--gamma", type=float, default=1.0, help="gamma parameter for RBF tranformation")
+    ap.add_argument("-d", "--dataset", type=str, default='wine', help="which dataset to use for training, options: 'wine', 'wholesales', 'diabetes', 'balance'")
     args = vars(ap.parse_args())
 
-    return args["epochs"], args["alpha"], args["batch-size"], args["tranformation-type"], args["folds"], args["l2"], args["gamma"]
+    return args["epochs"], args["alpha"], args["batch_size"], args["tranformation_type"], args["folds"], args["l2"], args["gamma"], args["dataset"]
 
-n_epochs = 200
-l_rate = 0.001
-batch_size = 50
-tranformation_type = 'pol' # 'pol' for polynomial or 'rbf' for RBF
-number_of_folds = 5
-l_2 = 1.0
+
+def test_coefficients(X, y, coeffecients):
+    trainX, minmax = minmax_fit_tranform(X)
+    return choose_the_best_model(trainX, y, coeffecients)
+
+
+n_epochs, l_rate, batch_size, tranformation_type, number_of_folds, l_2, gamma, data = get_parameters()
+
+print get_parameters()
 leave_out = 0.2
 
 # load data
-dataset = wholesales_customers_data()
+dataset = load_data(data)
 X, y = seperate_labels_features(dataset)
 X, y = make_blobs(n_samples=400, n_features=2, centers=2, cluster_std=2.5, random_state=95)
 index_to_leave_out = int(round(len(X) * leave_out))
@@ -329,8 +342,7 @@ for class_y_in in classes:
         X_train, X_test = X_in[train_index], X_in[test_index]
         y_train, y_test = class_y_in[train_index], class_y_in[test_index]
 
-        W, lossHistory, accuracy = train(
-            X_train, X_test, y_train, y_test, n_epochs, l_rate, batch_size, tranformation_type)
+        W, lossHistory, accuracy = train(X_train, X_test, y_train, y_test, n_epochs, l_rate, batch_size, tranformation_type, l2=l_2, gamma=gamma)
         accuracies.append(accuracy)
         coeffecients.append(W)
 
