@@ -2,10 +2,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.model_selection import KFold
 from sklearn.kernel_approximation import RBFSampler
+from sklearn.datasets.samples_generator import make_blobs
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from csv import reader
+import argparse
 
 
 # Find the min and max values for each column
@@ -62,8 +64,6 @@ def polynomial_transformation(X):
         for w in index_feat:
             record_result.append(float(w[0] * w[1]))
         
-        print index_feat
-
         result.append(record_result)
 
     return np.array(result)
@@ -157,7 +157,7 @@ def shuffle_data(data_x, data_y):
     return seperate_labels_features(data)
 
 # actual the core algorthm to train our data
-def train(X_train, X_test, y_train, y_test, number_of_epochs, alpha, batchSize, tranformation_type, gamma=1):
+def train(X_train, X_test, y_train, y_test, number_of_epochs, alpha, batchSize, tranformation_type, l2=1.0, gamma=1):
     # scaler = MinMaxScaler()
 
     trainX, minmax = minmax_fit_tranform(X_train)
@@ -186,16 +186,15 @@ def train(X_train, X_test, y_train, y_test, number_of_epochs, alpha, batchSize, 
         for (batchX, batchY) in next_batch(shuffled_data_x, shuffled_data_y, batchSize):
             # get predicted values from sigmoid function
             preds = sigmoid_activation(batchX.dot(W))
+            # regularization using l2
+            W = (W * (1 - (alpha * l2))) - alpha * np.dot((preds - batchY).T, batchX)
             # calculate error
             error = preds - batchY
             # batch loass is the square value of error
             loss = np.sum(error ** 2)
             epochLoss.append(loss)
             gradient = batchX.T.dot(error) / batchX.shape[0]
-            # print 'trace'
-            # print len(trainX.shape)
-            # print 'trace1'
-            # print len(gradient)
+
             # update coefficients
             W += -alpha * gradient
 
@@ -273,16 +272,33 @@ def choose_the_best_model(unknown_data_X, unknown_data_y, coeffecients):
 
     return coeffecients[np.argmax(model_accuracies)]
 
+
+def get_parameters():
+    ap = argparse.ArgumentParser()
+    
+    ap.add_argument("-e", "--epochs", type=int, default=100, help="# of epochs")
+    ap.add_argument("-a", "--alpha", type=float, default=0.01, help="learning rate")
+    ap.add_argument("-b", "--batch-size", type=int, default=32, help="size of SGD mini-batches")
+    ap.add_argument("-b", "--tranformation-type", type=str, default="pol", help="tranformation type 'pol' or 'rbf'")
+    ap.add_argument("-b", "--folds", type=int, default=5, help="# of folds")
+    ap.add_argument("-b", "--l2", type=float, default=1.0, help="l2")
+    ap.add_argument("-b", "--gamma", type=float, default=1.0, help="gamma parameter for RBF tranformation")
+    args = vars(ap.parse_args())
+
+    return args["epochs"], args["alpha"], args["batch-size"], args["tranformation-type"], args["folds"], args["l2"], args["gamma"]
+
 n_epochs = 200
 l_rate = 0.01
 batch_size = 50
 tranformation_type = 'pol' # 'pol' for polynomial or 'rbf' for RBF
 number_of_folds = 5
+l_2 = 1.0
 leave_out = 0.2
 
 # load data
 dataset = wholesales_customers_data()
 X, y = seperate_labels_features(dataset)
+# (X, y) = make_blobs(n_samples=400, n_features=2, centers=2, cluster_std=2.5, random_state=95)
 index_to_leave_out = int(round(len(X) * leave_out))
 
 
@@ -304,7 +320,7 @@ for class_y_in in classes:
 
     X_train, X_test, y_train, y_test = [], [], [], []
 
-    kf = KFold(n_splits=number_of_folds, random_state=42, shuffle=True)
+    kf = KFold(n_splits=number_of_folds)
 
     accuracies = list()
     coeffecients = list()

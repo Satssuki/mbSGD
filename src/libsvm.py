@@ -53,6 +53,11 @@ def wine_data():
     return download_data('https://archive.ics.uci.edu/ml/machine-learning-databases/wine/wine.data', False)
 
 
+# https://archive.ics.uci.edu/ml/datasets/Wholesale+customers
+def wholesales_customers_data():
+    return download_data('https://archive.ics.uci.edu/ml/machine-learning-databases/00292/Wholesale%20customers%20data.csv', label_index_is_last=False)
+
+
 def accuracy_metric(actual, predicted):
     correct = 0
 
@@ -65,7 +70,7 @@ def accuracy_metric(actual, predicted):
 
 leave_out = 0.2
 
-dataset = wine_data()
+dataset = wholesales_customers_data()
 np.random.shuffle(dataset)
 X, y = seperate_labels_features(dataset)
 index_to_leave_out = int(round(len(X) * leave_out))
