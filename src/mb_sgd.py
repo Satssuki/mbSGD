@@ -34,28 +34,35 @@ def minmax_fit_tranform(data):
 # calculcate new features using polynomial transformation
 def polynomial_transformation(X):
 
-    poly = PolynomialFeatures(2)
-    return poly.fit_transform(X)
+    # poly = PolynomialFeatures(2)
+    # return poly.fit_transform(X)
 
     result = list()
+    index_result = list()
 
     for record in X:
         record = X[0]
         record_result = list()
+
         record_result.append(1)
 
         for i in range(len(X[0])):
             record_result.append(record[i])
 
+        ind_data = list()
+
         index_feat = list()
 
         for i in range(len(X[0])):
             for j in range(len(X[0])):
-                if [record[i], record[j]] not in index_feat and [record[j], record[i]] not in index_feat:
+                if [i, j] not in ind_data and [j, i] not in ind_data:
+                    ind_data.append([i, j])
                     index_feat.append([record[i], record[j]])
 
         for w in index_feat:
-            record_result.append(w[0] * w[1])
+            record_result.append(float(w[0] * w[1]))
+        
+        print index_feat
 
         result.append(record_result)
 

@@ -7,39 +7,42 @@ import itertools
 from sklearn.preprocessing import PolynomialFeatures
 
 
-def get_polynomial_fetures(X):
-    final_f = list()
-    X1_features = itertools.combinations_with_replacement(np.arange(X), X)
+# calculcate new features using polynomial transformation
+def polynomial_transformation(X):
 
-    for i in X1_features:
-        final_f.append(np.array(i[0: (X)]))
+    # poly = PolynomialFeatures(2)
+    # return poly.fit_transform(X)
 
-    return final_f
-
-
-def polynomial_fetures(X):
     result = list()
+    index_result = list()
 
     for record in X:
         record = X[0]
         record_result = list()
+
         record_result.append(1)
 
         for i in range(len(X[0])):
             record_result.append(record[i])
 
+        ind_data = list()
+
         index_feat = list()
 
         for i in range(len(X[0])):
             for j in range(len(X[0])):
-                if [record[i], record[j]] not in index_feat and [record[j], record[i]] not in index_feat:
+                if [i, j] not in ind_data and [j, i] not in ind_data:
+                    ind_data.append([i, j])
                     index_feat.append([record[i], record[j]])
-        
-        for w in index_feat:
-            record_result.append(w[0] * w[1])
 
-    result.append(record_result)
-    return result
+        for w in index_feat:
+            record_result.append(float(w[0] * w[1]))
+        
+        print index_feat
+
+        result.append(record_result)
+
+    return np.array(result)
 
 
 epochs = 100
@@ -61,9 +64,9 @@ X = np.c_[np.ones((X.shape[0])), X]
 rbf_feature = RBFSampler(gamma=1, random_state=1)
 X_features = rbf_feature.fit_transform(X)
 
-dd = [[10, 2, 3]]
+dd = [[1 ,2 ,3, 5, 5]]
 
-test = polynomial_all_fetures(dd)
+test = polynomial_transformation(dd)
 print np.array(test)
 
 poly = PolynomialFeatures(2)
