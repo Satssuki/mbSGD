@@ -72,3 +72,26 @@ plt.xlabel("Epoch #")
 plt.ylabel("Loss")
 plt.show()
 
+# Calculate accuracy percentage
+def accuracy_metric(actual, predicted):
+    correct = 0
+    for i in range(len(actual)):
+        if actual[i] == predicted[i]:
+            correct += 1
+    return correct / float(len(actual)) * 100.0
+
+def predict(row, coefficients):
+    yhat = coefficients[0]
+    for i in range(len(row)-1):
+        yhat += coefficients[i + 1] * row[i]
+    return 1.0 / (1.0 + np.exp(-yhat))
+
+
+predictions = list()
+for i in range(len(testX)):
+	predicted = predict(testX[i], W)
+	predicted = round(predicted)
+	predictions.append(predicted)
+
+accuracy = accuracy_metric(y_test, predictions)
+print accuracy

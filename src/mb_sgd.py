@@ -218,18 +218,18 @@ def train(X_train, X_test, y_train, y_test, number_of_epochs, alpha, batchSize, 
 
     accuracy = accuracy_metric(y_test, predictions)
 
-    return W, lossHistory, accuracy
+    # return W, lossHistory, accuracy
 
     # plt.figure()
     # plt.scatter(trainX[:, 1], trainX[:, 2], marker="o", c=y_train)
     # plt.plot(trainX, Y, "r-")
-    # fig = plt.figure()
-    # plt.plot(np.arange(0, number_of_epochs), lossHistory)
-    # fig.suptitle("Training Loss")
-    # plt.xlabel("Epoch #")
-    # plt.ylabel("Loss")
-    # plt.show()
-    # return W, lossHistory, accuracy
+    fig = plt.figure()
+    plt.plot(np.arange(0, number_of_epochs), lossHistory)
+    fig.suptitle("Training Loss")
+    plt.xlabel("Epoch #")
+    plt.ylabel("Loss")
+    plt.show()
+    return W, lossHistory, accuracy
 
 # get the number of labels our dataset has
 def get_classes(labels):
@@ -288,7 +288,7 @@ def get_parameters():
     return args["epochs"], args["alpha"], args["batch-size"], args["tranformation-type"], args["folds"], args["l2"], args["gamma"]
 
 n_epochs = 200
-l_rate = 0.01
+l_rate = 0.001
 batch_size = 50
 tranformation_type = 'pol' # 'pol' for polynomial or 'rbf' for RBF
 number_of_folds = 5
@@ -298,7 +298,7 @@ leave_out = 0.2
 # load data
 dataset = wholesales_customers_data()
 X, y = seperate_labels_features(dataset)
-# (X, y) = make_blobs(n_samples=400, n_features=2, centers=2, cluster_std=2.5, random_state=95)
+X, y = make_blobs(n_samples=400, n_features=2, centers=2, cluster_std=2.5, random_state=95)
 index_to_leave_out = int(round(len(X) * leave_out))
 
 
