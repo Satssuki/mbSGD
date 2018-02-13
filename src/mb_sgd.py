@@ -295,7 +295,18 @@ def get_parameters():
     ap.add_argument("-d", "--dataset", type=str, default='wine', help="which dataset to use for training, options: 'wine', 'wholesales', 'diabetes', 'balance'")
     args = vars(ap.parse_args())
 
-    return args["epochs"], args["alpha"], args["batch_size"], args["tranformation_type"], args["folds"], args["l2"], args["gamma"], args["dataset"]
+    n_epochs, l_rate, batch_size, tranformation_type, number_of_folds, l_2, gamma, data =args["epochs"], args["alpha"], args["batch_size"], args["tranformation_type"], args["folds"], args["l2"], args["gamma"], args["dataset"]
+
+    print 'epochs: ' + str(n_epochs)
+    print 'learning rate: ' + str(l_rate)
+    print 'batch size: ' + str(batch_size)
+    print 'tranformation type: ' + tranformation_type
+    print 'number of folds: ' + str(number_of_folds)
+    print 'l2: ' + str(l_2)
+    print 'gamma: ' + str(gamma)
+    print 'dataset: ' + str(data)
+
+    return n_epochs, l_rate, batch_size, tranformation_type, number_of_folds, l_2, gamma, data
 
 # use agnostic data to get the model with the best accuracy 
 def test_coefficients(X, y, coeffecients):
@@ -304,7 +315,7 @@ def test_coefficients(X, y, coeffecients):
 
 n_epochs, l_rate, batch_size, tranformation_type, number_of_folds, l_2, gamma, data = get_parameters()
 
-print get_parameters()
+print n_epochs, l_rate, batch_size, tranformation_type, number_of_folds, l_2, gamma, data
 leave_out = 0.2
 
 # load data

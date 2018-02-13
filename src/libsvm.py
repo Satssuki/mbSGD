@@ -14,20 +14,18 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
 
 # merge features from labes
-
-
 def merge_labels_features(data_x, data_y):
     data = np.c_[data_x, data_y]
     return data
 
 
+# downloading data from a specific url and check if label column is the last one
 def download_data(url, label_index_is_last=True):
     pandas_data = pd.read_csv(url)
     x, y = seperate_labels_features(
         pandas_data.values, label_index_is_last=label_index_is_last)
     data = merge_labels_features(x, y)
     return np.array(data)
-
 
 # seperate features from labes
 def seperate_labels_features(data, label_index_is_last=True):
@@ -43,15 +41,17 @@ def seperate_labels_features(data, label_index_is_last=True):
 
     return data_x, data_y
 
-
 # https://archive.ics.uci.edu/ml/datasets/pima+indians+diabetes
 def diabetes_data():
     return download_data('https://archive.ics.uci.edu/ml/machine-learning-databases/pima-indians-diabetes/pima-indians-diabetes.data', True)
 
-
+# https://archive.ics.uci.edu/ml/datasets/wine
 def wine_data():
     return download_data('https://archive.ics.uci.edu/ml/machine-learning-databases/wine/wine.data', False)
 
+# https://archive.ics.uci.edu/ml/machine-learning-databases/balance-scale/balance-scale.data
+def balance_scale_data():
+    return download_data('https://archive.ics.uci.edu/ml/machine-learning-databases/balance-scale/balance-scale.data', label_index_is_last=False)
 
 # https://archive.ics.uci.edu/ml/datasets/Wholesale+customers
 def wholesales_customers_data():
@@ -67,20 +67,10 @@ def accuracy_metric(actual, predicted):
 
     return correct / float(len(actual)) * 100.0
 
-
-leave_out = 0.2
-
-dataset = wholesales_customers_data()
-np.random.shuffle(dataset)
+dataset = wine_data()
 X, y = seperate_labels_features(dataset)
-index_to_leave_out = int(round(len(X) * leave_out))
-X_out = X[-index_to_leave_out:]
-y_out = y[-index_to_leave_out:]
 
-X_in = X[:-index_to_leave_out]
-y_in = y[:-index_to_leave_out]
-
-clf = SVC(decision_function_shape='ovo', random_state=42)
-scores = cross_val_score(clf, X_in, y_in, cv=5)
+clf = SVC(decision_function_shape='ovr', random_state=42)
+scores = cross_val_score(clf, X, y, cv=40)
 
 print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
