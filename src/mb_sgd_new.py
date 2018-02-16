@@ -36,14 +36,13 @@ def minmax_fit_tranform(data):
 # calculcate new features using polynomial transformation
 def polynomial_transformation(X):
 
-    poly = PolynomialFeatures(2)
-    return poly.fit_transform(X)
+    # poly = PolynomialFeatures(2)
+    # return poly.fit_transform(X)
 
     result = list()
     index_result = list()
 
     for record in X:
-        record = X[0]
         record_result = list()
 
         record_result.append(1)
@@ -185,19 +184,7 @@ def train(trainX, testX, y_train, y_test, number_of_epochs, alpha, batchSize, l2
 
     accuracy = accuracy_metric(y_test, predictions)
 
-    # return W, lossHistory, accuracy
-
-    # plt.figure()
-    # plt.scatter(trainX[:, 1], trainX[:, 2], marker="o", c=y_train)
-    # plt.plot(trainX, Y, "r-")
-    # fig = plt.figure()
-    # plt.plot(np.arange(0, number_of_epochs), lossHistory)
-    # fig.suptitle("Training Loss")
-    # plt.xlabel("Epoch #")
-    # plt.ylabel("Loss")
-    # plt.show()
     return accuracy, W
-    # return W, lossHistory, accuracy
 
 # get the number of labels our dataset has
 def get_classes(labels):
@@ -267,7 +254,7 @@ def get_parameters():
 
     return n_epochs, l_rate, batch_size, tranformation_type, number_of_folds, l_2, gamma, data
 
-
+# cross validation method to find model
 def cross_validation(n_epochs, l_rate, batch_size, tranformation_type, number_of_folds, l_2, gamma, X, y):
     
     print 'data length: ' + str(len(X))
@@ -319,13 +306,5 @@ data = 'diabetes'
 dataset = load_data(data)
 X, y = seperate_labels_features(dataset)
 # X, y = make_blobs(n_samples=700, n_features=2, centers=2, cluster_std=2.5, random_state=95)
-
-print 'features: '
-for i in range(10):
-    print X[i]
-
-print 'labels: '
-for i in range(10):
-    print y[i]
 
 cross_validation(n_epochs, l_rate, batch_size, tranformation_type, number_of_folds, l_2, gamma, X, y)
