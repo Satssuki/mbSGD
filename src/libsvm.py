@@ -67,10 +67,14 @@ def accuracy_metric(actual, predicted):
 
     return correct / float(len(actual)) * 100.0
 
-dataset = wine_data()
+dataset = diabetes_data()
 X, y = seperate_labels_features(dataset)
 
-clf = SVC(decision_function_shape='ovr', random_state=42)
-scores = cross_val_score(clf, X, y, cv=40)
+clf = SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+    decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
+    max_iter=-1, probability=False, random_state=None, shrinking=True,
+    tol=0.001, verbose=False)
+
+scores = cross_val_score(clf, X, y, cv=5)
 
 print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
