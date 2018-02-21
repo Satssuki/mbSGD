@@ -1,5 +1,5 @@
 from sklearn.model_selection import KFold
-from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.metrics.pairwise import euclidean_distances
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -85,7 +85,12 @@ def polynomial_transformation(X):
 
 def rbf_transformation(X, gamma=1):
     """ Calculcate new features using rbf kernel transformation """
-    return rbf_kernel(X, None, gamma)
+    # return rbf_kernel(X, None, gamma)
+
+    K = euclidean_distances(X, X, squared=True)
+    K *= -gamma
+    np.exp(K, K)
+    return K
 
 def transform_data(X, tranformation_type, gamma):
     """ Actually transform data using user selection """
@@ -115,7 +120,18 @@ def wine_data():
 
 def balance_scale_data():
     """ https://archive.ics.uci.edu/ml/machine-learning-databases/balance-scale/balance-scale.data """
-    return download_data('https://archive.ics.uci.edu/ml/machine-learning-databases/balance-scale/balance-scale.data', label_index_is_last=False)
+    data = download_data('https://archive.ics.uci.edu/ml/machine-learning-databases/balance-scale/balance-scale.data', label_index_is_last=False)
+    X, y =seperate_labels_features(data)
+    new_y = list()
+    for yy in y:
+        if(yy == 'B'):
+            new_y.append(0.0)
+        elif (yy == 'L'):
+            new_y.append(1.0)
+        elif (yy == 'R'):
+            new_y.append(2.0)
+
+    return merge_labels_features(X, np.array(new_y))
 
 def wholesales_customers_data():
     """ https://archive.ics.uci.edu/ml/datasets/Wholesale+customers """
@@ -171,14 +187,15 @@ def mb_sgd(trainX, y_train, number_of_epochs, alpha, batchSize, l2=1.0):
             preds = sigmoid_activation(batchX.dot(W))
             # calculate error
             error = preds - batchY
-            # regularization
-            W = (W * (1 - (alpha * l2))) - alpha * np.dot(error.T, batchX)
             # batch loass is the square value of error
             loss = np.sum(error ** 2)
-            gradient = batchX.T.dot(error) / batchX.shape[0]
 
             # update coefficients
-            W += -alpha * gradient
+            # gradient = batchX.T.dot(error) / batchX.shape[0]
+            #W += -alpha * gradient
+            
+            # regularization
+            W = (W * (1 - (alpha * l2))) - alpha * np.dot(error.T, batchX)
 
     return W
 
@@ -286,7 +303,7 @@ def multiclass_cross_validation(n_epochs, l_rate, batch_size, tranformation_type
     for class_y in ovr_y:
         X_train, X_test, y_train, y_test = [], [], [], []
 
-        kf = KFold(n_splits=number_of_folds)
+        kf = KFold(n_splits=number_of_folds, shuffle=True, random_state=4)
 
         accuracies = list()
         coeffecients = list()
