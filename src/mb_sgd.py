@@ -15,7 +15,7 @@ def merge_labels_features(data_x, data_y):
 def seperate_labels_features(data, label_index_is_last=True):
     """ Seperate features from labes """
     data_x = []
-    data_y = []
+    data_y = [] 
 
     if(label_index_is_last):
         data_x = data[:, 0:(len(data[0]) - 1)]
